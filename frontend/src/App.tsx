@@ -81,6 +81,27 @@ function App() {
     }
   };
 
+  const handleRemove = async () => {
+    try {
+      const response = await fetch('http://localhost:3000/todos', {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (response.ok) {
+        const updatedTodos = await response.json();
+        setTodos(updatedTodos);
+      } else {
+        console.error('Failed to delete completed todos');
+      }
+    } catch (error) {
+      console.error('Error deleting todos:', error);
+    }
+  };
+  
+
   return (
     <>
       <div>
@@ -100,6 +121,7 @@ function App() {
           &nbsp;{todo.title} - {todo.description}
         </div>
       ))}
+      <div><button onClick={handleRemove}>Remove completed</button></div>
     </>
   );
 }

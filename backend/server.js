@@ -5,7 +5,7 @@ const PORT = 3000;
 const cors = require('cors');
 
 app.use(cors());
-app.use(express.json()); // Replace bodyParser with express.json()
+app.use(express.json());
 
 app.get('/todos', (req, res) => {
   fs.readFile('todos.json', 'utf8', (err, data) => {
@@ -106,6 +106,28 @@ app.delete('/todos/:id', (req, res) => {
     }
   });
 });
+
+app.delete('/todos', (req, res) => {
+  fs.readFile('todos.json', 'utf8', (err, data) => {
+    if (err) {
+      res.status(500).send('Internal Server Error');
+    } else {
+      const todos = JSON.parse(data);
+      const todosCopy = todos.filter(t => t.completed !== true);
+      if (todos.length > todosCopy.length) {
+        fs.writeFile('todos.json', JSON.stringify(todosCopy), (err) => {
+          if (err) {
+            res.status(500).send('Internal Server Error');
+          } else {
+            res.json(todosCopy);
+          }
+        });
+      } else {
+        res.status(404).send('Not Found');
+      }
+    }
+  })
+})
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
