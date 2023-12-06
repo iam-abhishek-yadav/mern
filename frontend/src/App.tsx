@@ -4,6 +4,7 @@ function App() {
   const [todos, setTodos] = useState<Array<{ id: number; title: string; description: string; completed: boolean }>>([]);
   const [title, setTitle] = useState<string>('')
   const [description, setDescription] = useState<string>('')
+  const [isEditing, setIsEditing] = useState<boolean>(false)
 
   useEffect(() => {
     const fetchData = async () => {
