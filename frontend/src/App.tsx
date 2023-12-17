@@ -1,10 +1,9 @@
 import { useState, useEffect, ChangeEvent } from 'react';
 
 function App() {
-  const [todos, setTodos] = useState<Array<{ id: number; title: string; description: string; completed: boolean }>>([]);
+  const [todos, setTodos] = useState<Array<{ id: number; title: string; description: string; completed: boolean; isEditing: boolean }>>([]);
   const [title, setTitle] = useState<string>('')
   const [description, setDescription] = useState<string>('')
-  const [isEditing, setIsEditing] = useState<boolean>(false)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -82,6 +81,66 @@ function App() {
     }
   };
 
+  const handleEditToggle = (id: number) => {
+    setTodos((prevTodos) =>
+      prevTodos.map((todo) => ({
+        ...todo,
+        isEditing: todo.id === id ? !todo.isEditing : todo.isEditing,
+      }))
+    );
+  };
+
+  const handleEditSave = async (id: number) => {
+    const updatedTodo = todos.find((todo) => todo.id === id);
+
+    if (updatedTodo) {
+      try {
+        const response = await fetch(`http://localhost:3000/todos/${id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            title: updatedTodo.title,
+            description: updatedTodo.description,
+            completed: updatedTodo.completed,
+          }),
+        });
+
+        if (response.ok) {
+          const updatedTodo = await response.json();
+          setTodos((prevTodos) =>
+            prevTodos.map((todo) => (todo.id === id ? { ...updatedTodo, isEditing: false } : todo))
+          );
+        } else {
+          console.error(`Failed to update todo with ID ${id}`);
+        }
+      } catch (error) {
+        console.error('Error updating todo:', error);
+      }
+    }
+  };
+
+  const handleTodoDelete = async (id: number) => {
+    try {
+      const response = await fetch(`http://localhost:3000/todos/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+  
+      if (response.ok) {
+        const updatedTodos = await response.json();
+        setTodos(updatedTodos);
+      } else {
+        console.error('Failed to delete completed todos');
+      }
+    } catch (error) {
+      
+    }
+  }
+
   const handleRemove = async () => {
     try {
       const response = await fetch('http://localhost:3000/todos', {
@@ -114,12 +173,45 @@ function App() {
       <hr />
       {todos.map((todo) => (
         <div key={todo.id}>
-          <input
-            type="checkbox"
-            checked={todo.completed}
-            onChange={() => handleCompleteToggle(todo.id)}
-          />
-          &nbsp;{todo.title} - {todo.description}
+          {todo.isEditing ? (
+            <>
+              <input
+                type="text"
+                value={todo.title}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setTodos((prevTodos) =>
+                    prevTodos.map((t) =>
+                      t.id === todo.id ? { ...t, title: e.target.value } : t
+                    )
+                  )
+                }
+              />
+              <input
+                type="text"
+                value={todo.description}
+                onChange={(e: ChangeEvent<HTMLInputElement>) =>
+                  setTodos((prevTodos) =>
+                    prevTodos.map((t) =>
+                      t.id === todo.id ? { ...t, description: e.target.value } : t
+                    )
+                  )
+                }
+              />
+              <button onClick={() => handleEditSave(todo.id)}>Save</button>
+            </>
+          ) : (
+            <>
+              <input
+                type="checkbox"
+                checked={todo.completed}
+                onChange={() => handleCompleteToggle(todo.id)}
+              />
+              &nbsp; &nbsp;
+              <span onClick={() => handleEditToggle(todo.id)}>{todo.title} - {todo.description}</span>
+              &nbsp; &nbsp;
+              <button onClick = {() => handleTodoDelete(todo.id)}>Delete</button>
+            </>
+          )}
         </div>
       ))}
       <div><button onClick={handleRemove}>Remove completed</button></div>
