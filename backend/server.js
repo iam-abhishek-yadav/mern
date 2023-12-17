@@ -44,6 +44,7 @@ app.post('/todos', (req, res) => {
         title: req.body.title,
         description: req.body.description,
         completed: false,
+        isEditing: false,
       };
       todos.push(todo);
       fs.writeFile('todos.json', JSON.stringify(todos), (err) => {
